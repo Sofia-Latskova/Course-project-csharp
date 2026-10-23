@@ -65,6 +65,16 @@ namespace Firewatch
             Console.WriteLine($"first:  {first}"); 
             Console.WriteLine($"second: {second}\n");
 
+            Console.WriteLine("--- Демонстрация структуры ---");
+            Coordinates coordA = new Coordinates(53.35, 83.77); 
+            Console.WriteLine($"coordA (до изменений): {coordA}");
+            Coordinates coordB = coordA;
+            coordB.Latitude = 55.75;
+            coordB.Longitude = 37.61; 
+            Console.WriteLine($"coordA (после изменений coordB): {coordA}"); 
+            Console.WriteLine($"coordB: {coordB}\n");
+            Console.WriteLine($"coordA == coordB? {Equals(coordA, coordB)}\n");
+
             Console.WriteLine("--- Освобождение ресурса ---\n");
             using (Battery sessionBattery = new Battery(60, 100, "BAT-SESSION"))
             {
@@ -76,13 +86,10 @@ namespace Firewatch
             Console.WriteLine("--- Сборщик мусора ---\n");
             WeakReference<Battery> watcher = CreateTemporaryBattery();
             Console.WriteLine("Убираем ссылки и вызываем GC.Collect()...");
-
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
-
             Console.WriteLine($"Объект жив после сборки мусора? {watcher.TryGetTarget(out _)}\n");
-
             Console.WriteLine("========== Конец программы ==========");
         }
 
