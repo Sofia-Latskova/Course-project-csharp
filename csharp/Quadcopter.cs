@@ -32,21 +32,9 @@ namespace Firewatch
             Console.WriteLine($"[Quadcopter] Создан {_number}");
         }
 
-        public string Number
-        {
-            get { return _number; }
-        }
-
-        public State CurrentState
-        {
-            get { return _state; }
-        }
-
-        public int BatteryCharge
-        {
-            get { return _battery.ChargePercent; }
-        }
-
+        public string Number => _number; 
+        public State CurrentState => _state; 
+        public int BatteryCharge => _battery.ChargePercent; 
         public string StateStr
         {
             get

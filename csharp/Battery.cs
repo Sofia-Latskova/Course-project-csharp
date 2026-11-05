@@ -50,15 +50,8 @@ namespace Firewatch
             }
         }
 
-        public int CapasityPercent
-        {
-            get { return _capasityPercent; }
-        }
-
-        public string Serial
-        {
-            get { return _serial; }
-        }
+        public int CapasityPercent => _capasityPercent;
+        public string Serial => _serial; 
 
         public void Consume(int percent)
         {
@@ -75,10 +68,7 @@ namespace Firewatch
             Console.WriteLine($"[Battery] {_serial} заряжен до {ChargePercent}%");
         }
 
-        public bool IsValid
-        {
-            get { return _chargePercent >= 0 && _chargePercent <= _capasityPercent; }
-        }
+        public bool IsValid=> _chargePercent >= 0 && _chargePercent <= _capasityPercent;
 
         public override string ToString()
         {

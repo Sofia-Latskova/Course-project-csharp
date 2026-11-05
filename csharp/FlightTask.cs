@@ -34,16 +34,8 @@ namespace Firewatch
         }
 
         // Свойства
-        public string ZoneName
-        {
-            get { return _zoneName; }
-        }
-
-        public Status CurrentStatus
-        {
-            get { return _status; }
-        }
-
+        public string ZoneName => _zoneName; 
+        public Status CurrentStatus => _status; 
         public string StatusStr
         {
             get
