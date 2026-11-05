@@ -13,7 +13,8 @@ packages/
 *.sln.docstates
 
 # Настройки редактора
-.vscode/
+.vscode/ 
+.vs/
 
 # Артефакты ReSharper
 ReSharper/
