@@ -12,34 +12,40 @@ namespace Firewatch
             Returning
         }
 
-        private readonly string _number;
-        private State _state;
-        private readonly Battery _battery;
+        public string Number { get; }
+        public State CurrentState { get; private set; }
+        public Battery Battery { get; }
 
         public Quadcopter()
         {
-            _number = "DRN-000";
-            _state = State.OnBase;
-            _battery = new Battery();
-            Console.WriteLine($"[Quadcopter] Создан {_number}");
+            Number = "DRN-000";
+            CurrentState = State.OnBase;
+            Battery = new Battery();
+            Console.WriteLine($"[Quadcopter] Создан {Number}");
         }
 
         public Quadcopter(string number, int chargePercent, int capacityPercent, string batterySerial)
         {
-            _number = number;
-            _state = State.OnBase;
-            _battery = new Battery(chargePercent, capacityPercent, batterySerial);
-            Console.WriteLine($"[Quadcopter] Создан {_number}");
+            Number = number;
+            CurrentState = State.OnBase;
+            Battery = new Battery(chargePercent, capacityPercent, batterySerial);
+            Console.WriteLine($"[Quadcopter] Создан {Number}");
         }
 
-        public string Number => _number; 
-        public State CurrentState => _state; 
-        public int BatteryCharge => _battery.ChargePercent; 
+        public Quadcopter(Quadcopter other)
+        {
+            Number = other.Number;
+            CurrentState = other.CurrentState;
+            Battery = new Battery(other.Battery); 
+            Console.WriteLine($"[Quadcopter] Копия: {Number}");
+        }
+
+        public int BatteryCharge => Battery.ChargePercent;
         public string StateStr
         {
             get
             {
-                switch (_state)
+                switch (CurrentState)
                 {
                     case State.OnBase: return "на базе";
                     case State.Flying: return "в полёте";
@@ -54,45 +60,38 @@ namespace Firewatch
         {
             if (!CanTakeOff)
             {
-                Console.WriteLine($"[Quadcopter] Отказ взлёта: заряд {_battery.ChargePercent}% ниже минимума {Battery.MinCharge}%");
+                Console.WriteLine($"[Quadcopter] Отказ взлёта: заряд {Battery.ChargePercent}% ниже минимума {Battery.MinCharge}%");
                 return false;
             }
-            _state = State.Flying;
-            Console.WriteLine($"[Quadcopter] {_number} взлетел");
+            CurrentState = State.Flying;
+            Console.WriteLine($"[Quadcopter] {Number} взлетел");
             return true;
         }
 
         public void Land()
         {
-            _state = State.OnBase;
-            Console.WriteLine($"[Quadcopter] {_number} сел на базу");
+            CurrentState = State.OnBase;
+            Console.WriteLine($"[Quadcopter] {Number} сел на базу");
         }
 
         public void Scan()
         {
-            if (_state != State.Flying)
+            if (CurrentState != State.Flying)
             {
                 Console.WriteLine("[Quadcopter] Сканирование невозможно: не в полёте");
                 return;
             }
-            _state = State.Scanning;
-            _battery.Consume(2);
-            Console.WriteLine($"[Quadcopter] {_number} снял показания, заряд={_battery.ChargePercent}%");
-            _state = State.Flying;
+            CurrentState = State.Scanning;
+            Battery.Consume(2);
+            Console.WriteLine($"[Quadcopter] {Number} снял показания, заряд={Battery.ChargePercent}%");
+            CurrentState = State.Flying;
         }
 
-        public bool CanTakeOff
-        {
-            get 
-            { 
-                return _state == State.OnBase
-                    && _battery.ChargePercent >= Battery.MinCharge; 
-            } 
-        }
+        public bool CanTakeOff => CurrentState == State.OnBase && Battery.ChargePercent >= Battery.MinCharge;
 
         public override string ToString()
         {
-            return $"{_number}: {StateStr}, заряд {BatteryCharge}%";
+            return $"{Number}: {StateStr}, заряд {BatteryCharge}%";
         }
     }
 }
