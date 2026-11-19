@@ -8,76 +8,80 @@ namespace Firewatch
         public const int CriticalCharge = 10;
         public const int MaxPercent = 100;
 
-        private int _chargePercent;
-        private int _capasityPercent;
-        private readonly string _serial;
+        public int ChargePercent { get; private set; }
+        public int CapacityPercent { get; }
+        public string Serial { get; }
 
         public Battery()
         {
-            _chargePercent = MaxPercent;
-            _capasityPercent = MaxPercent;
-            _serial = "BAT-000";
-            Console.WriteLine($"[Battery] Создан {_serial} (по умолчанию)");
+            ChargePercent = MaxPercent;
+            CapacityPercent = MaxPercent;
+            Serial = "BAT-000";
+            Console.WriteLine($"[Battery] Создан {Serial} (по умолчанию)");
         }
        
         public Battery(int chargePercent, int capacityPercent, string serial)
         {
-            _capasityPercent = capacityPercent;
-            _serial = serial;  
-            ChargePercent = chargePercent; 
-            Console.WriteLine($"[Battery] Создан {_serial} заряд={_chargePercent}%");
+            CapacityPercent = capacityPercent;
+            Serial = serial;
+            SetCharge(chargePercent);
+            Console.WriteLine($"[Battery] Создан {Serial} заряд={ChargePercent}%");
         }
 
-        public int ChargePercent
+        public Battery(Battery other)
         {
-            get { return _chargePercent; }
-            private set
-            {
-                if (value < 0)
-                {
-                    Console.WriteLine("[Battery] Некорректный заряд (меньше 0), сброшен в 0");
-                    _chargePercent = 0;
-                }
-                else if (value > _capasityPercent)
-                {
-                    Console.WriteLine($"[Battery] Некорректный заряд (больше ёмкости), установлен {_capasityPercent}%");
-                    _chargePercent = _capasityPercent;
-                }
-                else
-                {
-                    _chargePercent = value;
-                }
-            }
+            ChargePercent = other.ChargePercent;
+            CapacityPercent = other.CapacityPercent;
+            Serial = other.Serial;
+            Console.WriteLine($"[Battery] Копия: {Serial} заряд={ChargePercent}%");
         }
 
-        public int CapasityPercent => _capasityPercent;
-        public string Serial => _serial; 
+      
+       private void SetCharge(int value) 
+       {
+          if (value < 0)
+          {
+             Console.WriteLine("[Battery] Некорректный заряд (меньше 0), сброшен в 0");
+             ChargePercent = 0;
+          }
+          else if (value > CapacityPercent)
+          {
+             Console.WriteLine($"[Battery] Некорректный заряд (больше ёмкости), установлен {CapacityPercent}%");
+             ChargePercent = CapacityPercent;
+          }
+          else
+          {
+             ChargePercent = value;
+          }     
+       }
+                 
+
 
         public void Consume(int percent)
         {
             if (percent <= 0) return;
-            ChargePercent -= percent;
-            Console.WriteLine($"[Battery] {_serial} разряжен до {ChargePercent}%");
+            SetCharge(ChargePercent - percent);
+            Console.WriteLine($"[Battery] {Serial} разряжен до {ChargePercent}%");
 
         }
 
         public void Charge(int percent)
         {
             if (percent <= 0) return;
-            ChargePercent += percent;
-            Console.WriteLine($"[Battery] {_serial} заряжен до {ChargePercent}%");
+            SetCharge(ChargePercent + percent);
+            Console.WriteLine($"[Battery] {Serial} заряжен до {ChargePercent}%");
         }
 
-        public bool IsValid=> _chargePercent >= 0 && _chargePercent <= _capasityPercent;
+        public bool IsValid=> ChargePercent >= 0 && ChargePercent <= CapacityPercent;
 
         public override string ToString()
         {
-            return $"{_serial}: заряд {_chargePercent}%";
+            return $"{Serial}: заряд {ChargePercent}%";
         }
 
         public void Dispose()
         {
-            Console.WriteLine($"[Battery] Сеанс с {_serial} завершён (Dispose)");
+            Console.WriteLine($"[Battery] Сеанс с {Serial} завершён (Dispose)");
         }
     }
 
