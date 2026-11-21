@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public class FlightTask
+    public class FlightTask: IComparable<FlightTask>
     {
         public enum Status
         {
@@ -14,7 +14,8 @@ namespace Firewatch
 
         private readonly string _zoneName;
         private Status _status;
-        private Quadcopter _drone;   
+        private Quadcopter _drone;
+        private IAlertPolicy? _policy;
 
         // Конструктор по умолчанию
         public FlightTask()
@@ -25,13 +26,25 @@ namespace Firewatch
             Console.WriteLine($"[FlightTask] Создано задание для зоны {_zoneName}");
         }
 
-        public FlightTask(string zoneName, Quadcopter drone)
+        public FlightTask(string zoneName, Quadcopter drone, IAlertPolicy policy)
         {
             _zoneName = zoneName;
             _status = Status.Created;
             _drone = drone;
-            Console.WriteLine($"[FlightTask] Создано задание для зоны {_zoneName}");
+            _policy = policy ?? throw new InvalidMissionStateException("политика сигнализации не задана");
+            Console.WriteLine($"[FlightTask] Создано задание для зоны {_zoneName} (политика: {_policy.AlertChannel})\");");
         }
+        public void SetPolicy(IAlertPolicy policy)
+        {
+            _policy = policy ?? throw new InvalidMissionStateException("нельзя установить пустую политику");
+            Console.WriteLine($"[FlightTask] Политика заменена на: {_policy.AlertChannel}");
+        }
+        public (string Channel, string Message) TriggerAlert(ScanResult scan)
+        {
+            if (_policy == null) throw new InvalidMissionStateException("политика сигнализации не задана");
+            return (_policy.AlertChannel, _policy.FormatAlert(scan));
+        }
+
 
         // Свойства
         public string ZoneName => _zoneName; 
@@ -55,14 +68,9 @@ namespace Firewatch
         {
             if (!CanStart)
             {
-                Console.WriteLine("[FlightTask] Отказ запуска: дрон не готов или занят");
-                return false;
+                throw new InvalidMissionStateException("нельзя начать: дрон не готов или задание не в статусе 'создано'");
             }
-            if (!_drone.TakeOff())
-            {
-                Console.WriteLine("[FlightTask] Отказ запуска: дрон не смог взлететь");
-                return false;
-            }
+            _drone.TakeOff();
             _status = Status.InProgress;
             Console.WriteLine($"[FlightTask] Задание в зоне {_zoneName} начато");
             return true;
@@ -72,8 +80,7 @@ namespace Firewatch
         {
             if (_status != Status.InProgress)
             {
-                Console.WriteLine("[FlightTask] Прервать можно только выполняемое задание");
-                return;
+                throw new InvalidMissionStateException($"прервать можно только выполняемое задание (текущий статус: {StatusStr})");
             }
             _drone.Land();
             _status = Status.Aborted;
@@ -84,8 +91,7 @@ namespace Firewatch
         {
             if (_status != Status.InProgress)
             {
-                Console.WriteLine("[FlightTask] Завершить можно только выполняемое задание");
-                return;
+                throw new InvalidMissionStateException($"завершить можно только выполняемое задание (текущий статус: {StatusStr})");
             }
             _drone.Land();
             _status = Status.Completed;
@@ -107,7 +113,17 @@ namespace Firewatch
             return $"Задание {_zoneName}: {StatusStr}";
         }
 
+        public int CompareTo(FlightTask? other)
+        {
+            if (other is null) return 1;
 
+            // Сначала сравниваем по статусу ( активные/новые выше завершённых)
+            int statusComparison = _status.CompareTo(other._status);
+            if (statusComparison != 0) return statusComparison;
+
+            // Если статусы одинаковые — сортируем по названию зоны по алфавиту
+            return string.Compare(_zoneName, other._zoneName, StringComparison.Ordinal);
+        }
 
 
 

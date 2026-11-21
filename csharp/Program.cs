@@ -7,75 +7,168 @@ namespace Firewatch
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            Console.WriteLine("========== Lab-4 Наследование (C#) ==========\n");
-            Console.WriteLine("--- 0. Создание квадрокоптера-носителя ---");
-            var quad = new Quadcopter("DRN-001", 100, 100, "BAT-001");
-            Console.WriteLine();
+            Console.WriteLine("========== Lab-5 Полиморфизм (C#) ==========\n");
+            var drone = new Quadcopter("DRN-001", 80, 100, "BAT-001");
+            var temp = new TempSensor("TS-001", drone, 45.0);
+            var smoke = new SmokeSensor("SS-001", drone, 0.2);
+            var flame = new FlameSensor("FS-001", drone, 10);
 
-            //наследники массив
-            Console.WriteLine("--- 1. Создание массива наследников ---");
-            SensorList sensors = new SensorList
+            //работа через интерфейсы
+            Console.WriteLine("\n===== работа через интерфейсы =====");
+            var diag = new List<IDiagnosable> { temp, drone };
+            foreach (var u in diag)
+                Console.WriteLine($"  Health = {u.HealthPercent}% {(u.IsOperational ? "[OK]" : "[FAIL]")}");
+
+            var report = new List<IReportable> { temp, smoke, flame, drone };
+            foreach (var item in report)
+                Console.WriteLine($"  [{item.ReportSection}] {item.ToReportLine()}");
+
+            //раннее/позднее
+            Console.WriteLine("\n===== раннее/позднее =====");
+            BaseSensor s = new TempSensor("TS-002", drone, 45.0);
+            Console.WriteLine($"  GetKind()     (невиртуальный, раннее):  {s.GetKind()}");
+            Console.WriteLine($"  GetTypeName() (виртуальный, позднее):   {s.GetTypeName()}");
+
+            //dynamic_cast
+            Console.WriteLine("\n===== dynamic_cast =====");
+            var units = new List<IDiagnosable> { temp, smoke, flame, drone };
+            foreach (var u in units)
             {
-                new TempSensor("TEMP-1", quad, 25.5),
-                new SmokeSensor("SMOKE-1", quad, 0.1),
-                new FlameSensor("FLAME-1", quad, 15)
+                if (u is IScannable sc)
+                {
+                    try { Console.WriteLine($"  [OK]   {sc.SensorSerial} -> {sc.ReadValue()}"); }
+                    catch (SensorFailure e) { Console.WriteLine($"  [FAIL] {e.Message}"); }
+                }
+                else Console.WriteLine("  [SKIP] объект не реализует IScannable");
+            }
+
+            //конфигурирование
+            Console.WriteLine("\n===== конфигурирование AlertPolicy =====");
+            var task = new FlightTask("ZONE-A", drone, new SirenAlert());
+            var scan = new ScanResult { HasReliableData = true };
+            scan.Readings.Add(new ScanResult.Reading { Serial = "TS-001", Kind = "температура", Value = 55.0, Reliable = true });
+            scan.Readings.Add(new ScanResult.Reading { Serial = "SS-001", Kind = "дым", Value = 0.7, Reliable = true });
+            scan.Readings.Add(new ScanResult.Reading { Serial = "FS-001", Kind = "пламя", Value = 45.0, Reliable = true });
+
+            void PrintAlert(string label)
+            {
+                var (ch, msg) = task.TriggerAlert(scan);
+                Console.WriteLine($"  {label} -> [{ch}] {msg}");
+            }
+
+            PrintAlert("Сирена       ");
+            task.SetPolicy(new SilentLogAlert());
+            PrintAlert("Тихий лог    ");
+            task.SetPolicy(new EmercomCallAlert());
+            PrintAlert("Вызов МЧС    ");
+
+            //исключения
+            Console.WriteLine("\n====исключения =====");
+
+            Console.WriteLine("\n Успешный прогон:");
+            var drone2 = new Quadcopter("DRN-002", 80, 100, "BAT-002");
+            var ok = new FlightTask("ZONE-OK", drone2, new SirenAlert());
+            try
+            {
+                ok.Start();
+                drone2.Scan();
+                drone2.Scan();
+                ok.Complete();
+            }
+            catch (Exception e) { Console.WriteLine($"  Неожиданная ошибка: {e.Message}"); }
+
+            Console.WriteLine("\n Низкий заряд при взлёте:");
+            var lowBat = new Quadcopter("DRN-LOW", 5, 100, "BAT-LOW");
+            var bad = new FlightTask("ZONE-LOW", lowBat, new SirenAlert());
+            try
+            {
+                bad.Start();
+            }
+            catch (LowBatteryException e) { Console.WriteLine($"  [LowBatteryException] {e.Message}"); }
+            catch (Exception e) { Console.WriteLine($"  [Exception] {e.Message}"); }
+
+            Console.WriteLine("\n Сканирование не в полёте:"); 
+            var drone3 = new Quadcopter("DRN-003", 80, 100, "BAT-003");
+            try
+            {
+                drone3.Scan();
+            }
+            catch (InvalidMissionStateException e) { Console.WriteLine($"  [InvalidMissionStateException] {e.Message}"); }
+            catch (Exception e) { Console.WriteLine($"  [Exception] {e.Message}"); }
+
+            Console.WriteLine("\n Прервать неначатое задание:");
+            var drone4 = new Quadcopter("DRN-004", 80, 100, "BAT-004");
+            var t = new FlightTask("ZONE-4", drone4, new SirenAlert());
+            try
+            {
+                t.Abort("тест");
+            }
+            catch (InvalidMissionStateException e) { Console.WriteLine($"  [InvalidMissionStateException] {e.Message}"); }
+            catch (Exception e) { Console.WriteLine($"  [Exception] {e.Message}"); }
+
+            Console.WriteLine("\n Неисправный датчик:");
+            var broken = new TempSensor("TS-BROKEN", drone, 45.0);
+            try
+            {
+                
+                broken.Break();
+                broken.ReadValue();
+            }
+            catch (SensorFailure e) { Console.WriteLine($"  [SensorFailure] {e.Message}"); }
+            catch (Exception e) { Console.WriteLine($"  [Exception] {e.Message}"); }
+
+            Console.WriteLine("\n Порядок catch (частный -> общий):"); 
+            var lowBatOrder = new Quadcopter("DRN-X", 5, 100, "BAT-X");
+            try
+            {
+               
+                lowBatOrder.TakeOff();
+            }
+            catch (SensorFailure e) { Console.WriteLine($"  SensorFailure: {e.Message}"); }
+            catch (LowBatteryException e) { Console.WriteLine($"  LowBatteryException: {e.Message}"); }
+            catch (BatteryOverDischargeException e) { Console.WriteLine($"  BatteryOverDischargeException: {e.Message}"); }
+            catch (InvalidMissionStateException e) { Console.WriteLine($"  InvalidMissionStateException: {e.Message}"); }
+            catch (FirewatchException e) { Console.WriteLine($"  FirewatchException: {e.Message}"); }
+            catch (Exception e) { Console.WriteLine($"  Exception: {e.Message}"); }
+            //стандартный интерфейс
+            Console.WriteLine("\n===== стандартный интерфейс IComparable<FlightTask> =====\n");
+            var tasks = new List<FlightTask>
+            {
+                new FlightTask("ZONE-C", drone, new SirenAlert()),
+                new FlightTask("ZONE-A", drone, new SilentLogAlert()),
+                new FlightTask("ZONE-B", drone, new EmercomCallAlert())
             };
 
-            //полиморфизм
-            Console.WriteLine("\n--- 2. Полиморфизм ---");
-            foreach (var sensor in sensors)
+            Console.WriteLine("До сортировки:");
+            foreach (var item in tasks)
+                Console.WriteLine($"  {item}");
+
+            tasks.Sort(); // Стандартная библиотека вызывает FlightTask.CompareTo()
+
+            Console.WriteLine("После сортировки (List.Sort):");
+            foreach (var item in tasks)
+                Console.WriteLine($"  {item}");
+
+            //Демонстрация IDisposable 
+            Console.WriteLine("\n===== освобождение ресурсов (using / finally) =====");
+            try
             {
-                sensor.ReadValue();
-                Console.WriteLine(sensor.Describe());
-                Console.WriteLine("-------------------------");
+                using var tempBattery = new Battery(15, 100, "BAT-TEST");
+                Console.WriteLine($"  Батарея в работе: {tempBattery}");
+                tempBattery.Consume(30);
             }
-
-            //Копирование
-            Console.WriteLine("\n--- 3. Поверхностное и глубокое копирование ---");
-            var original = new TempSensor("TEMP-ORIG", quad, 20.0);
-            original.Quadcopter.TakeOff();
-            original.ReadValue();
-
-            //поверхностная
-            Console.WriteLine("\nПоверхнстная:");
-            Console.WriteLine("Оригинал до изменений:\n" + original.Describe());
-            var shallow = original.ShallowCopy();
-            shallow.Quadcopter.Land();           
-            Console.WriteLine("\nОригинал после изменения дрона через shallow-копию:\n" + original.Describe());
-
-            //глубокая
-            Console.WriteLine("\nГлубокая:");
-            original.Quadcopter.TakeOff(); // Снова в полет
-            Console.WriteLine("Оригинал до изменений:\n" + original.Describe());
-            var deep = original.Clone();  
-            deep.Quadcopter.Land();       // Меняем свой дрон
-            Console.WriteLine("\nОригинал после изменения дрона через deep-копию:\n" + original.Describe());
-
-            //сравнение
-            Console.WriteLine("\n--- 4. Сравнение по содержимому ---");
-            var s1 = new TempSensor("TEST-123", quad, 10);
-            var s2 = new TempSensor("TEST-123", quad, 99); // Другая температура, но тот же номер
-            Console.WriteLine($"s1.Equals(s2): {s1.Equals(s2)} (должно быть True, серийники совпадают)");
-            Console.WriteLine($"s1.GetHashCode() == s2.GetHashCode(): {s1.GetHashCode() == s2.GetHashCode()}");
-            var hashSet = new HashSet<BaseSensor> { s1, s2 };
-            Console.WriteLine($"Количество элементов в HashSet: {hashSet.Count} (должно быть 1)");
-
-            //Стат.счетчик
-            Console.WriteLine("\n--- 5. Статический счётчик ---");
-            foreach (var s in sensors)
+            catch (BatteryOverDischargeException e)
             {
-                Console.WriteLine($"ID: {s.Id} | Тип: {s.GetType().Name}");
+                Console.WriteLine($"  [Поймано исключение] {e.Message}");
             }
-            Console.WriteLine($"Последний выданный ID: {BaseSensor.NextSensorId() - 1}");
-
-            //this
-            Console.WriteLine("\n--- 6. Использование this ---");
-            var selfCopy = new TempSensor("TEMP-SELF", quad, 15);
-            Console.WriteLine($"Сравнение объекта с самим собой (this == o): {selfCopy.Equals(selfCopy)}");
+            finally
+            {
+                Console.WriteLine("  [finally] Блок завершения сеанса тестирования батареи выполнен.");
+            }
             Console.WriteLine("\n=== КОНЕЦ ===");
 
         }

@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public class Battery: IDisposable
+    public class Battery: IDiagnosable, IReportable, IDisposable
     {
         public const int MinCharge = 20;
         public const int CriticalCharge = 10;
@@ -60,6 +60,7 @@ namespace Firewatch
         public void Consume(int percent)
         {
             if (percent <= 0) return;
+            if (ChargePercent - percent < 0) throw new BatteryOverDischargeException(ChargePercent, percent);
             SetCharge(ChargePercent - percent);
             Console.WriteLine($"[Battery] {Serial} разряжен до {ChargePercent}%");
 
@@ -83,7 +84,17 @@ namespace Firewatch
         {
             Console.WriteLine($"[Battery] Сеанс с {Serial} завершён (Dispose)");
         }
+
+        // IDiagnosable
+        public bool IsOperational => ChargePercent >= CriticalCharge;
+        public int HealthPercent => ChargePercent;
+        // IReportable
+        public string ReportSection => "ПИТАНИЕ";
+        public string ToReportLine() => $"{Serial};BATTERY;{ChargePercent}%";
+
     }
+
+
 
 }
 
