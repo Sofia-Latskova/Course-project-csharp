@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public sealed class FlameSensor : BaseSensor
+    public sealed class FlameSensor : BaseSensor, Scannable
     {
         public int Intensity { get; set; }
         private int _lastValue = 0;
@@ -13,11 +13,11 @@ namespace Firewatch
             Console.WriteLine($"[FlameSensor] Создан датчик пламени.");
         }
 
-        public override double ReadValue()
+        public double ReadValue()
         {
-            if (WearDown()) return -999.0;
+            if (WearDown()) throw new SensorFailure(_serial);
 
-            if (Intensity > 90) { Break(); return -999.0; }
+            if (Intensity > 90) { Break(); throw new SensorFailure(_serial); }
 
             if (_lastValue < 10)
             {
@@ -56,6 +56,9 @@ namespace Firewatch
             copy.Quadcopter = new Quadcopter(Quadcopter);
             return copy;
         }
-
+        //раннее/позднее
+        public new string GetKind() => "датчик пламени";
+        public override string GetTypeName() => "пламя";
+        public string SensorSerial => _serial;
     }
 }

@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public abstract class BaseSensor
+    public abstract class BaseSensor: Diagnosable, Reportable
     {
         protected static readonly Random Rng = new Random(); //чтобы не было одинаковых чисел
         private static int _lastId = 0; //статический счетчик 
@@ -27,9 +27,6 @@ namespace Firewatch
             Console.WriteLine($"[BaseSensor] Создан: {_serial} (ID: {Id}, дрон: {Quadcopter.Number})");
         }
         public static int NextSensorId() => ++_lastId;
-
-        // Абстрактный метод 
-        public abstract double ReadValue();
 
         // Виртуальный метод с реализацией
         public virtual string Describe()
@@ -81,6 +78,17 @@ namespace Firewatch
             return _serial.GetHashCode();
         }
 
+        //IDiagnosable
+        public bool IsOperational => !IsBroken && Durability > 0;
+        public int HealthPercent => Durability;
+
+        // Раннее/позднее связывание:
+        public string GetKind() => "датчик";
+        public virtual string GetTypeName() => "датчик";
+
+        //IReportable
+        public string ReportSection => "ДАТЧИКИ";
+        public string ToReportLine() => $"{_serial};{GetTypeName()};{(IsOperational ? "OK" : "FAIL")}";
     }
 }
 

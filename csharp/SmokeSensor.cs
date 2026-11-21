@@ -3,7 +3,7 @@ using System;
 namespace Firewatch
 {
     // sealed запрещает наследование (как final в C++)
-    public sealed class SmokeSensor : BaseSensor
+    public sealed class SmokeSensor : BaseSensor, Scannable
     {
         public double SmokeLevel { get; set; }
         private int _warningCount = 0;
@@ -16,9 +16,9 @@ namespace Firewatch
             Console.WriteLine($"[SmokeSensor] Создан датчик дыма.");
         }
 
-        public override double ReadValue()
+        public double ReadValue()
         {
-            if (WearDown()) return -999.0;
+            if (WearDown()) throw new SensorFailure(_serial);
 
             // Прогрев
             if (_warmupCounter < 2)
@@ -31,7 +31,7 @@ namespace Firewatch
             if (SmokeLevel > 0.95)
             {
                 Break();
-                return -999.0;
+                throw new SensorFailure(_serial);
             }
 
             // Накопление тревог
@@ -76,5 +76,9 @@ namespace Firewatch
             return copy;
         }
 
+        //раннее/позднее
+        public new string GetKind() => "датчик дыма";
+        public override string GetTypeName() => "дым";
+        public string SensorSerial => _serial;
     }
 }

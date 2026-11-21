@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public class Quadcopter
+    public class Quadcopter: Diagnosable, Reportable
     {
         public enum State
         {
@@ -60,8 +60,7 @@ namespace Firewatch
         {
             if (!CanTakeOff)
             {
-                Console.WriteLine($"[Quadcopter] Отказ взлёта: заряд {Battery.ChargePercent}% ниже минимума {Battery.MinCharge}%");
-                return false;
+                throw new LowBatteryException(Battery.ChargePercent, Battery.MinCharge);
             }
             CurrentState = State.Flying;
             Console.WriteLine($"[Quadcopter] {Number} взлетел");
@@ -78,12 +77,16 @@ namespace Firewatch
         {
             if (CurrentState != State.Flying)
             {
-                Console.WriteLine("[Quadcopter] Сканирование невозможно: не в полёте");
-                return;
+                throw new InvalidMissionStateException($"сканирование невозможно: дрон не в полёте (состояние: {StateStr})");
             }
             CurrentState = State.Scanning;
             Battery.Consume(2);
             Console.WriteLine($"[Quadcopter] {Number} снял показания, заряд={Battery.ChargePercent}%");
+            if (Battery.ChargePercent < Battery.CriticalCharge)
+            {
+                CurrentState = State.Returning;
+                throw new LowBatteryException(Battery.ChargePercent, Battery.CriticalCharge);
+            }
             CurrentState = State.Flying;
         }
 
@@ -93,6 +96,12 @@ namespace Firewatch
         {
             return $"{Number}: {StateStr}, заряд {BatteryCharge}%";
         }
+
+        public bool IsOperational => CurrentState == State.OnBase && Battery.ChargePercent >= Battery.MinCharge;
+        public int HealthPercent => Battery.ChargePercent;
+        public string ReportSection => "ДРОН";
+        public string ToReportLine() => $"{Number};DRONE;{BatteryCharge}%;{StateStr}";
+
     }
 }
 

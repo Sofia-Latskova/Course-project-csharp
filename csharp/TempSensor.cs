@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public class TempSensor : BaseSensor
+    public class TempSensor : BaseSensor, Scannable
     {
         public double Temperature { get; set; }
         private double _lastValue = 0.0;
@@ -13,15 +13,14 @@ namespace Firewatch
             Console.WriteLine($"[TempSensor] Создан датчик темп. {_serial}");
         }
 
-        public override double ReadValue()
+        public double ReadValue()
         {
-            if (WearDown()) return -999.0;
-
+            if (WearDown()) throw new SensorFailure(_serial);
             double noise = (Rng.Next(100) - 50) / 100.0;
             _lastValue = Temperature + noise; // Берем текущую температуру
             return _lastValue;
         }
-
+        public string SensorSerial => _serial;
         public override string Describe()
         {
             if (IsBroken) return GetHeader() + "\n[ДАТЧИК НЕИСПРАВЕН]";
@@ -46,10 +45,9 @@ namespace Firewatch
             return copy;
         }
 
-
-
-
-
+        //раннее/позднее
+        public new string GetKind() => "датчик температуры";
+        public override string GetTypeName() => "температура";
 
 
 
