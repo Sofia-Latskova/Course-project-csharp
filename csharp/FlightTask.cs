@@ -32,7 +32,7 @@ namespace Firewatch
             _status = Status.Created;
             _drone = drone;
             _policy = policy ?? throw new InvalidMissionStateException("политика сигнализации не задана");
-            Console.WriteLine($"[FlightTask] Создано задание для зоны {_zoneName} (политика: {{_policy.AlertChannel}})\");");
+            Console.WriteLine($"[FlightTask] Создано задание для зоны {_zoneName} (политика: {_policy.AlertChannel})\");");
         }
         public void SetPolicy(AlertPolicy policy)
         {
@@ -113,7 +113,17 @@ namespace Firewatch
             return $"Задание {_zoneName}: {StatusStr}";
         }
 
+        public int CompareTo(FlightTask? other)
+        {
+            if (other is null) return 1;
 
+            // Сначала сравниваем по статусу ( активные/новые выше завершённых)
+            int statusComparison = _status.CompareTo(other._status);
+            if (statusComparison != 0) return statusComparison;
+
+            // Если статусы одинаковые — сортируем по названию зоны по алфавиту
+            return string.Compare(_zoneName, other._zoneName, StringComparison.Ordinal);
+        }
 
 
 
