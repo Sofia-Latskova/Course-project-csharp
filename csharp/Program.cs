@@ -19,11 +19,11 @@ namespace Firewatch
 
             //работа через интерфейсы
             Console.WriteLine("\n===== работа через интерфейсы =====");
-            var diag = new List<Diagnosable> { temp, drone };
+            var diag = new List<IDiagnosable> { temp, drone };
             foreach (var u in diag)
                 Console.WriteLine($"  Health = {u.HealthPercent}% {(u.IsOperational ? "[OK]" : "[FAIL]")}");
 
-            var report = new List<Reportable> { temp, smoke, flame, drone };
+            var report = new List<IReportable> { temp, smoke, flame, drone };
             foreach (var item in report)
                 Console.WriteLine($"  [{item.ReportSection}] {item.ToReportLine()}");
 
@@ -35,10 +35,10 @@ namespace Firewatch
 
             //dynamic_cast
             Console.WriteLine("\n===== dynamic_cast =====");
-            var units = new List<Diagnosable> { temp, smoke, flame, drone };
+            var units = new List<IDiagnosable> { temp, smoke, flame, drone };
             foreach (var u in units)
             {
-                if (u is Scannable sc)
+                if (u is IScannable sc)
                 {
                     try { Console.WriteLine($"  [OK]   {sc.SensorSerial} -> {sc.ReadValue()}"); }
                     catch (SensorFailure e) { Console.WriteLine($"  [FAIL] {e.Message}"); }

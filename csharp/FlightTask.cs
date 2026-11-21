@@ -15,7 +15,7 @@ namespace Firewatch
         private readonly string _zoneName;
         private Status _status;
         private Quadcopter _drone;
-        private AlertPolicy? _policy;
+        private IAlertPolicy? _policy;
 
         // Конструктор по умолчанию
         public FlightTask()
@@ -26,7 +26,7 @@ namespace Firewatch
             Console.WriteLine($"[FlightTask] Создано задание для зоны {_zoneName}");
         }
 
-        public FlightTask(string zoneName, Quadcopter drone, AlertPolicy policy)
+        public FlightTask(string zoneName, Quadcopter drone, IAlertPolicy policy)
         {
             _zoneName = zoneName;
             _status = Status.Created;
@@ -34,7 +34,7 @@ namespace Firewatch
             _policy = policy ?? throw new InvalidMissionStateException("политика сигнализации не задана");
             Console.WriteLine($"[FlightTask] Создано задание для зоны {_zoneName} (политика: {_policy.AlertChannel})\");");
         }
-        public void SetPolicy(AlertPolicy policy)
+        public void SetPolicy(IAlertPolicy policy)
         {
             _policy = policy ?? throw new InvalidMissionStateException("нельзя установить пустую политику");
             Console.WriteLine($"[FlightTask] Политика заменена на: {_policy.AlertChannel}");

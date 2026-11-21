@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public class Battery: Diagnosable, Reportable, IDisposable
+    public class Battery: IDiagnosable, IReportable, IDisposable
     {
         public const int MinCharge = 20;
         public const int CriticalCharge = 10;

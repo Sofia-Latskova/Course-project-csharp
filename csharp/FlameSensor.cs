@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public sealed class FlameSensor : BaseSensor, Scannable
+    public sealed class FlameSensor : BaseSensor, IScannable
     {
         public int Intensity { get; set; }
         private int _lastValue = 0;

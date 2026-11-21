@@ -3,7 +3,7 @@ using System;
 namespace Firewatch
 {
     // sealed запрещает наследование (как final в C++)
-    public sealed class SmokeSensor : BaseSensor, Scannable
+    public sealed class SmokeSensor : BaseSensor, IScannable
     {
         public double SmokeLevel { get; set; }
         private int _warningCount = 0;

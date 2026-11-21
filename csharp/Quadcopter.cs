@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public class Quadcopter: Diagnosable, Reportable
+    public class Quadcopter: IDiagnosable, IReportable
     {
         public enum State
         {

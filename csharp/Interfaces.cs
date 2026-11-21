@@ -1,28 +1,28 @@
 namespace Firewatch
 {
     // Контракт: умею снимать показание датчика
-    public interface Scannable
+    public interface IScannable
     {
         double ReadValue();
         string SensorSerial { get; }
     }
 
     // Контракт: умею сообщать о своей исправности
-    public interface Diagnosable
+    public interface IDiagnosable
     {
         bool IsOperational { get; }
         int HealthPercent { get; }
     }
 
     // Контракт: умею попасть в итоговый отчёт
-    public interface Reportable
+    public interface IReportable
     {
         string ReportSection { get; }
         string ToReportLine();
     }
 
     // Объект поведения как подать сигнал тревоги
-    public interface AlertPolicy
+    public interface IAlertPolicy
     {
         string AlertChannel { get; }
         string FormatAlert(ScanResult scan);

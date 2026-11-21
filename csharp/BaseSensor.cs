@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public abstract class BaseSensor: Diagnosable, Reportable
+    public abstract class BaseSensor: IDiagnosable, IReportable
     {
         protected static readonly Random Rng = new Random(); //чтобы не было одинаковых чисел
         private static int _lastId = 0; //статический счетчик 

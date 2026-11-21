@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Firewatch
 {
-    public sealed class SirenAlert : AlertPolicy
+    public sealed class SirenAlert : IAlertPolicy
     {
         public string AlertChannel => "SIREN";
         public string FormatAlert(ScanResult scan)
@@ -20,7 +20,7 @@ namespace Firewatch
         }
     }
 
-    public sealed class SilentLogAlert : AlertPolicy
+    public sealed class SilentLogAlert : IAlertPolicy
     {
         public string AlertChannel => "SILENT_LOG";
         public string FormatAlert(ScanResult scan)
@@ -38,7 +38,7 @@ namespace Firewatch
         }
     }
 
-    public sealed class EmercomCallAlert : AlertPolicy
+    public sealed class EmercomCallAlert : IAlertPolicy
     {
         public string AlertChannel => "CALL_EMERCOM";
         public string FormatAlert(ScanResult scan)

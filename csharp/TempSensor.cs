@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public class TempSensor : BaseSensor, Scannable
+    public class TempSensor : BaseSensor, IScannable
     {
         public double Temperature { get; set; }
         private double _lastValue = 0.0;
