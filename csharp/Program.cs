@@ -134,6 +134,41 @@ namespace Firewatch
             catch (InvalidMissionStateException e) { Console.WriteLine($"  InvalidMissionStateException: {e.Message}"); }
             catch (FirewatchException e) { Console.WriteLine($"  FirewatchException: {e.Message}"); }
             catch (Exception e) { Console.WriteLine($"  Exception: {e.Message}"); }
+            //стандартный интерфейс
+            Console.WriteLine("\n===== стандартный интерфейс IComparable<FlightTask> =====\n");
+            var tasks = new List<FlightTask>
+            {
+                new FlightTask("ZONE-C", drone, new SirenAlert()),
+                new FlightTask("ZONE-A", drone, new SilentLogAlert()),
+                new FlightTask("ZONE-B", drone, new EmercomCallAlert())
+            };
+
+            Console.WriteLine("До сортировки:");
+            foreach (var item in tasks)
+                Console.WriteLine($"  {item}");
+
+            tasks.Sort(); // Стандартная библиотека вызывает FlightTask.CompareTo()
+
+            Console.WriteLine("После сортировки (List.Sort):");
+            foreach (var item in tasks)
+                Console.WriteLine($"  {item}");
+
+            //Демонстрация IDisposable 
+            Console.WriteLine("\n===== освобождение ресурсов (using / finally) =====");
+            try
+            {
+                using var tempBattery = new Battery(15, 100, "BAT-TEST");
+                Console.WriteLine($"  Батарея в работе: {tempBattery}");
+                tempBattery.Consume(30);
+            }
+            catch (BatteryOverDischargeException e)
+            {
+                Console.WriteLine($"  [Поймано исключение] {e.Message}");
+            }
+            finally
+            {
+                Console.WriteLine("  [finally] Блок завершения сеанса тестирования батареи выполнен.");
+            }
             Console.WriteLine("\n=== КОНЕЦ ===");
 
         }

@@ -2,7 +2,7 @@ using System;
 
 namespace Firewatch
 {
-    public class FlightTask
+    public class FlightTask: IComparable<FlightTask>
     {
         public enum Status
         {
